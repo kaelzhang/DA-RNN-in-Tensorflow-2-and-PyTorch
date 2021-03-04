@@ -1,0 +1,9 @@
+codecov
+coverage
+flake8
+autopep8
+pytest
+pytest-cov
+setuptools
+twine
+jupyterlab
