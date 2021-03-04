@@ -5,8 +5,7 @@ from tensorflow.keras.layers import (
     LSTM,
     Dense,
     RepeatVector,
-    Permute,
-    Lambda
+    Permute
 )
 
 
@@ -14,45 +13,6 @@ from tensorflow.keras.layers import (
 # ```
 # Variable_{subscript}__{superscript}
 # ```
-
-
-class EncoderLSTM(Layer):
-    LAYER_NAME = 'encoder_lstm'
-
-    def __init__(
-        self,
-        m: int
-    ):
-        """
-        Args:
-            m (int): the size of the hidden state
-        """
-        super().__init__(name=self.LAYER_NAME)
-
-        self.lstm = LSTM(m, return_state=True)
-        self.initial_state = None
-
-    def call(self, x):
-        """
-        Args:
-            x: input data of shape (batch_size, 1, n) at time t
-        """
-        hidden_state, _, cell_state = self.lstm(
-            x,
-            initial_state=self.initial_state
-        )
-
-        self.initial_state = [hidden_state, cell_state]
-        return hidden_state, cell_state
-
-    def reset_state(self, h0, s0) -> None:
-        """
-        Args:
-            h0: initial hidden state
-            s0: initial cell state (as the paper use `s` as cell state)
-        """
-        self.initial_state = [h0, s0]
-
 
 class InputAttention(Layer):
     def __init__(self, T):
@@ -121,26 +81,24 @@ class EncoderInput(Layer):
     def __init__(
         self,
         T: int,
-        m
+        m: int
     ):
         """
         Generates the new input x_tilde at time t for encoder
+
+        Args:
+            T (int): the input length (time steps) of the sequence
+            m (int): the number of the encoder hidden states
         """
 
         super().__init__(name='encoder_input')
 
         self.T = T
 
-        self.input_lstm = EncoderLSTM(m)
+        self.input_lstm = LSTM(m, return_state=True)
         self.input_attention = InputAttention(T)
 
         self.initial_state = None
-
-    def build(self):
-        self.lambdas = [
-            Lambda(lambda x: x[:, t, :])
-            for t in range(self.T)
-        ]
 
     def call(
         self,
@@ -154,37 +112,35 @@ class EncoderInput(Layer):
             n: the number of features
 
         Returns:
-            The encoder hidden states {h_1, ... h_T}
+            (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
         """
-        self.input_lstm.reset_state(h0, s0)
 
         alpha_weights = tf.TensorArray(tf.float32, self.T)
 
         for t in range(self.T):
-            x = self.lambdas[t](X)
-            # -> (batch_size, n)
+            x = X[:, t, :][:, None, :]
+            # -> (batch_size, n) -> (batch_size, 1, n)
 
-            x = x[:, None, :]
-            # -> (batch_size, 1, n)
-
-            hidden_state, cell_state = self.input_lstm(x)
+            hidden_state, cell_state = self.input_lstm(
+                x,
+                initial_state=[h0, s0]
+            )
 
             alpha_t__k = self.input_attention(hidden_state, cell_state, X)
             # -> (batch_size, 1, n)
 
-            alpha_weights = alpha_weights.write(t, alpha_t__k)
+            alpha_weights = alpha_weights.write(
+                t,
+                alpha_t__k
+            )
 
         # Equation 10
         return tf.multiply(X, alpha_weights.stack())
         # -> (batch_size, T, n)
 
 
-class DecoderLSTM(EncoderLSTM):
-    LAYER_NAME = 'decoder_lstm'
-
-
 class TemporalAttention(Layer):
-    def __init__(self, m):
+    def __init__(self, m: int):
         """
         Calculates the attention weights::
 
@@ -193,7 +149,7 @@ class TemporalAttention(Layer):
         for each encoder hidden state h_t at the time step t
 
         Args:
-            m:
+            m (int): the number of the encoder hidden states
         """
 
         super().__init__(name='temporal_attention')
@@ -252,17 +208,11 @@ class Decoder(Layer):
 
         self.temp_attention = TemporalAttention(m)
         self.dense = Dense(1)
-        self.decoder_lstm = DecoderLSTM(p)
+        self.decoder_lstm = LSTM(p, return_state=True)
         self.encoder_lstm_units = m
 
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(1)
-
-    def build(self):
-        self.lambdas = [
-            Lambda(lambda x: x[:, t, :])
-            for t in range(self.T - 1)
-        ]
 
     def call(
         self,
@@ -279,8 +229,6 @@ class Decoder(Layer):
             s0: initial decoder cell state
         """
 
-        self.decoder_lstm.reset_state(h0, s0)
-
         hidden_state = None
         batch_size = encoder_h.shape[0]
 
@@ -289,8 +237,7 @@ class Decoder(Layer):
         # -> (batch_size, 1, m)
 
         for t in range(self.T - 1):
-            x = self.lambdas[t](data)
-            x = x[:, None, :]
+            x = data[:, t, :][:, None, :]
             # -> (batch_size, 1, 1)
 
             # Equation 15
@@ -300,7 +247,10 @@ class Decoder(Layer):
             )
             # -> (batch_size, 1, 1)
 
-            hidden_state, cell_state = self.decoder_lstm(y_tilde)
+            hidden_state, cell_state = self.decoder_lstm(
+                y_tilde,
+                initial_state=[h0, s0]
+            )
             # -> (batch_size, p)
 
             beta_t = self.temp_attention(
