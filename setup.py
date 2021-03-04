@@ -9,7 +9,7 @@ from da_rnn import __version__
 # README file and 2) it's easier to type in the README file than to put a raw
 # string in below ...
 def read(fname):
-    return open(Path(__file__).parent / 'docs' / 'README.md').read()
+    return open(Path(__file__).parent / 'README.md').read()
 
 
 def read_requirements(filename):
@@ -31,7 +31,7 @@ settings = dict(
     long_description_content_type='text/markdown',
     python_requires='>=3.7',
     install_requires=read_requirements('requirements.txt'),
-    tests_require=read_requirements('test-requirements.txt'),
+    tests_require=read_requirements('dev-requirements.txt'),
     classifiers=[
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Programming Language :: Python :: 3.7',

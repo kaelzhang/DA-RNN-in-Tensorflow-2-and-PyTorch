@@ -9,10 +9,16 @@ A Tensorflow 2 (Keras) implementation of the [Dual-Stage Attention-Based Recurre
 
 Paper: [https://arxiv.org/abs/1704.02971](https://arxiv.org/abs/1704.02971)
 
+## Install
+
+```sh
+pip install da-rnn
+```
+
 ## Usage
 
-```console
-
+```py
+from da_rnn import DARNN
 ```
 
 ## License
