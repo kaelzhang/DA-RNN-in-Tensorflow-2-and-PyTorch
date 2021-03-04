@@ -13,9 +13,6 @@ fix:
 install:
 	pip install -U -r requirements.txt -r dev-requirements.txt
 
-install-all:
-	pip install -U -r requirements.txt -r dev-requirements.txt -r docs/requirements.txt
-
 report:
 	codecov
 
