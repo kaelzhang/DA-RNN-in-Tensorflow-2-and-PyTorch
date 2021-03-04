@@ -5,7 +5,9 @@
 
 # Tensorflow 2 DA-RNN
 
-A Tensorflow 2 (Keras) implementation of the paper [A Dual-Stage Attention-Based Recurrent Neural Network for Time Series Prediction](https://arxiv.org/abs/1704.02971) [https://arxiv.org/abs/1704.02971](https://arxiv.org/abs/1704.02971)
+A Tensorflow 2 (Keras) implementation of the [Dual-Stage Attention-Based Recurrent Neural Network for Time Series Prediction](https://arxiv.org/abs/1704.02971)
+
+Paper: [https://arxiv.org/abs/1704.02971](https://arxiv.org/abs/1704.02971)
 
 ## Usage
 
