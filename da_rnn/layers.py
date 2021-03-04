@@ -33,24 +33,27 @@ class InputAttention(Layer):
         self,
         hidden_state,
         cell_state,
-        x__k
+        X
     ):
         """
         Args:
             hidden_state: hidden state of shape (batch_size, m)
             cell_state: cell state of shape (batch_size, m)
-            x__k: the k-th input driving (exogenous) series of shape (batch_size, T, n)
+            X: the n driving (exogenous) series of shape (batch_size, T, n)
 
         Returns:
-            The attention weights (alpha_t__k)
+            The attention weights (alpha_t) at time t, i.e.
+            (a_t__1, a_t__2, ..., a_t__n)
         """
+
+        n = X.shape[2]
 
         # Equation 8:
         e = self.v(
             tf.math.tanh(
                 self.W(
                     # [h_t-1; s_t-1]
-                    RepeatVector(x__k.shape[2])(
+                    RepeatVector(n)(
                         tf.concat([hidden_state, cell_state], axis=-1)
                         # -> (batch_size, m * 2)
                     )
@@ -59,7 +62,7 @@ class InputAttention(Layer):
                 # -> (batch_size, n, T)
 
                 + self.U(
-                    Permute((2, 1))(x__k)
+                    Permute((2, 1))(X)
                 )
                 # -> (batch_size, n, T)
             )
@@ -87,7 +90,7 @@ class EncoderInput(Layer):
         Generates the new input x_tilde at time t for encoder
 
         Args:
-            T (int): the input length (time steps) of the sequence
+            T (int): the length (time steps) of window size
             m (int): the number of the encoder hidden states
         """
 
@@ -126,12 +129,12 @@ class EncoderInput(Layer):
                 initial_state=[h0, s0]
             )
 
-            alpha_t__k = self.input_attention(hidden_state, cell_state, X)
+            alpha_t = self.input_attention(hidden_state, cell_state, X)
             # -> (batch_size, 1, n)
 
             alpha_weights = alpha_weights.write(
                 t,
-                alpha_t__k
+                alpha_t
             )
 
         # Equation 10
@@ -247,6 +250,7 @@ class Decoder(Layer):
             )
             # -> (batch_size, 1, 1)
 
+            # Equation 16
             hidden_state, cell_state = self.decoder_lstm(
                 y_tilde,
                 initial_state=[h0, s0]
@@ -270,6 +274,7 @@ class Decoder(Layer):
         )
         # -> (batch_size, 1, m + p)
 
+        # Equation 22
         return self.dense_Wb(
             self.dense_vb(concatenated)
         )

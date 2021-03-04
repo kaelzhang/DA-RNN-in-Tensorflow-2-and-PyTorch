@@ -33,6 +33,7 @@ class DARNN(Model):
             X, h0, s0
         )
 
+        # Equation 11
         encoder_h = self.encoder_lstm(x_tilde)
 
         y_hat_T = self.decoder(
