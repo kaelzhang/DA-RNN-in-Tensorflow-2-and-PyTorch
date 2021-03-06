@@ -10,15 +10,21 @@ from .layers import (
 
 
 class DARNN(Model):
-    def __init__(self, T, m, p):
+    def __init__(self, T: int, m: int, p: int):
         super().__init__(name='DARNN')
 
+        if T < 2:
+            raise ValueError(
+                f'T must be an integer larger than 1, but got `{T}`'
+            )
+
         self.m = m
-        self.encoder_input = EncoderInput(T=T, m=m)
+        self.encoder_input = EncoderInput(T, m)
         self.encoder_lstm = LSTM(m, return_sequences=True)
 
-        self.decoder = Decoder(T=T, p=p, m=m)
+        self.decoder = Decoder(T, m, p)
 
+    # Equation 1
     def call(self, inputs):
         """
         """
@@ -29,12 +35,12 @@ class DARNN(Model):
         h0 = tf.zeros((batch_size, self.m))
         s0 = tf.zeros((batch_size, self.m))
 
-        x_tilde = self.encoder_input(
+        X_tilde = self.encoder_input(
             X, h0, s0
         )
 
         # Equation 11
-        encoder_h = self.encoder_lstm(x_tilde)
+        encoder_h = self.encoder_lstm(X_tilde)
 
         y_hat_T = self.decoder(
             dec_data, encoder_h, h0, s0

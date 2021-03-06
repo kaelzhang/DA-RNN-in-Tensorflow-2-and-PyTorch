@@ -9,18 +9,35 @@ from tensorflow.keras.layers import (
 )
 
 
-# Notation Convention
-# ```
-# Variable_{subscript}__{superscript}
-# ```
+"""
+Notation (according to the paper)
+
+Naming Convention::
+
+    Variable_{time_step}__{sequence_number_of_driving_series}
+
+Variables / Parameters:
+    T (int): the length (time steps) of the window size
+    m (int): the number of the encoder hidden states
+    p (int): the number of the decoder hidden states
+    n (int): the number of features of a single driving series
+    X: the n driving (exogenous) series of shape (batch_size, T, n)
+    X_tilde: the new input for the encoder, i.e. X̃ = (x̃_1, ..., x̃_t, x̃_T)
+
+    hidden_state / h: hidden state
+    cell_state / s: cell state
+    Alpha_t: attention weights of the input attention layer at time t
+    Beta_t: attention weights of the temporal attention layer at time t
+"""
+
 
 class InputAttention(Layer):
     def __init__(self, T):
         """
-        Calculates the attention weight alpha_t__k
+        Calculates the encoder attention weight Alpha_t at time t
 
         Args:
-            T (int): the number of driving (exogenous) series
+            T (int): the length (time steps) of the window size
         """
 
         super().__init__(name='input_attention')
@@ -37,12 +54,12 @@ class InputAttention(Layer):
     ):
         """
         Args:
-            hidden_state: hidden state of shape (batch_size, m)
-            cell_state: cell state of shape (batch_size, m)
+            hidden_state: hidden state of shape (batch_size, m) at time t - 1
+            cell_state: cell state of shape (batch_size, m) at time t - 1
             X: the n driving (exogenous) series of shape (batch_size, T, n)
 
         Returns:
-            The attention weights (alpha_t) at time t, i.e.
+            The attention weights (Alpha_t) at time t, i.e.
             (a_t__1, a_t__2, ..., a_t__n)
         """
 
@@ -63,6 +80,7 @@ class InputAttention(Layer):
 
                 + self.U(
                     Permute((2, 1))(X)
+                    # -> (batch_size, n, T)
                 )
                 # -> (batch_size, n, T)
             )
@@ -87,10 +105,10 @@ class EncoderInput(Layer):
         m: int
     ):
         """
-        Generates the new input x_tilde at time t for encoder
+        Generates the new input X_tilde for encoder
 
         Args:
-            T (int): the length (time steps) of window size
+            T (int): the length (time steps) of the window size
             m (int): the number of the encoder hidden states
         """
 
@@ -111,11 +129,12 @@ class EncoderInput(Layer):
     ):
         """
         Args:
-            X: driving series of length T (batch_size, T, n)
-            n: the number of features
+            X: the n driving (exogenous) series of shape (batch_size, T, n)
+            h0: the initial encoder hidden state
+            s0: the initial encoder cell state
 
         Returns:
-            (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
+            The new input (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
         """
 
         alpha_weights = tf.TensorArray(tf.float32, self.T)
@@ -124,17 +143,17 @@ class EncoderInput(Layer):
             x = X[:, t, :][:, None, :]
             # -> (batch_size, n) -> (batch_size, 1, n)
 
-            hidden_state, cell_state = self.input_lstm(
+            hidden_state, _, cell_state = self.input_lstm(
                 x,
                 initial_state=[h0, s0]
             )
 
-            alpha_t = self.input_attention(hidden_state, cell_state, X)
+            Alpha_t = self.input_attention(hidden_state, cell_state, X)
             # -> (batch_size, 1, n)
 
             alpha_weights = alpha_weights.write(
                 t,
-                alpha_t
+                Alpha_t
             )
 
         # Equation 10
@@ -147,7 +166,7 @@ class TemporalAttention(Layer):
         """
         Calculates the attention weights::
 
-            beta_t = (beta_t__1, ..., beta_t__i, ..., beta_t__T) (1 <= i <= T)
+            Beta_t = (beta_t__1, ..., beta_t__i, ..., beta_t__T) (1 <= i <= T)
 
         for each encoder hidden state h_t at the time step t
 
@@ -200,9 +219,14 @@ class TemporalAttention(Layer):
 
 
 class Decoder(Layer):
-    def __init__(self, T, p, m):
+    def __init__(self, T, m, p):
         """
         Calculates y_hat_T
+
+        Args:
+            T (int): the length (time steps) of the window size
+            m (int): the number of the encoder hidden states
+            p (int): the number of the decoder hidden states
         """
 
         super().__init__(name='decoder')
@@ -251,21 +275,22 @@ class Decoder(Layer):
             # -> (batch_size, 1, 1)
 
             # Equation 16
-            hidden_state, cell_state = self.decoder_lstm(
+            hidden_state, _, cell_state = self.decoder_lstm(
                 y_tilde,
                 initial_state=[h0, s0]
             )
             # -> (batch_size, p)
 
-            beta_t = self.temp_attention(
+            Beta_t = self.temp_attention(
                 hidden_state,
                 cell_state,
                 encoder_h
-            )  # batch, T, 1
+            )
+            # -> (batch_size, T, 1)
 
             # Equation 14
             context_vector = tf.matmul(
-                beta_t, encoder_h, transpose_a=True
+                Beta_t, encoder_h, transpose_a=True
             )
             # -> (batch_size, 1, m)
 

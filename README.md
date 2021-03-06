@@ -21,6 +21,14 @@ pip install da-rnn
 from da_rnn import DARNN
 ```
 
+## Development
+
+Install dependencies:
+
+```sh
+make install
+```
+
 ## License
 
 [MIT](LICENSE)
