@@ -38,7 +38,7 @@ variable_{subscript}__{superscript}
 For example:
 
 - `y_T__i` means ![y_T__i](https://render.githubusercontent.com/render/math?math=y_T^1), the `i`-th prediction value at time `T`.
-- `x_t__k` means ![x_t__k](https://render.githubusercontent.com/render/math?math=x_t^k), the `k`-th input feature (driving series) at time `t`.
+- `alpha_t__k` means ![alpha_t__k](https://render.githubusercontent.com/render/math?math=\alpha_t^k), the attention weight measuring the importance of the `k`-th input feature (driving series) at time `t`.
 
 ### DARNN(T, m, p, y_dim=1)
 
