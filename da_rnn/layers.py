@@ -16,7 +16,7 @@ Naming Convention::
 
     Variable_{time_step}__{sequence_number_of_driving_series}
 
-Variables / Parameters:
+Variables / HyperParameters:
     T (int): the length (time steps) of the window size
     m (int): the number of the encoder hidden states
     p (int): the number of the decoder hidden states
@@ -42,9 +42,9 @@ class InputAttention(Layer):
 
         super().__init__(name='input_attention')
 
-        self.W = Dense(T)
-        self.U = Dense(T)
-        self.v = Dense(1)
+        self.W_e = Dense(T)
+        self.U_e = Dense(T)
+        self.v_e = Dense(1)
 
     def call(
         self,
@@ -66,9 +66,9 @@ class InputAttention(Layer):
         n = X.shape[2]
 
         # Equation 8:
-        e = self.v(
+        e = self.v_e(
             tf.math.tanh(
-                self.W(
+                self.W_e(
                     # [h_t-1; s_t-1]
                     RepeatVector(n)(
                         tf.concat([hidden_state, cell_state], axis=-1)
@@ -78,7 +78,7 @@ class InputAttention(Layer):
                 )
                 # -> (batch_size, n, T)
 
-                + self.U(
+                + self.U_e(
                     Permute((2, 1))(X)
                     # -> (batch_size, n, T)
                 )
@@ -176,9 +176,9 @@ class TemporalAttention(Layer):
 
         super().__init__(name='temporal_attention')
 
-        self.W = Dense(m)
-        self.U = Dense(m)
-        self.v = Dense(1)
+        self.W_d = Dense(m)
+        self.U_d = Dense(m)
+        self.v_d = Dense(1)
 
     def call(
         self,
@@ -197,9 +197,9 @@ class TemporalAttention(Layer):
         """
 
         # Equation 12
-        l = self.v(
+        l = self.v_d(
             tf.math.tanh(
-                self.W(
+                self.W_d(
                     RepeatVector(encoder_h.shape[1])(
                         tf.concat([hidden_state, cell_state], axis=-1)
                         # -> (batch_size, p * 2)
@@ -207,7 +207,7 @@ class TemporalAttention(Layer):
                     # -> (batch_size, T, p * 2)
                 )
                 # -> (batch_size, T, m)
-                + self.U(encoder_h)
+                + self.U_d(encoder_h)
             )
             # -> (batch_size, T, m)
         )

@@ -11,6 +11,16 @@ from .layers import (
 
 class DARNN(Model):
     def __init__(self, T: int, m: int, p: int):
+        """
+        Args:
+            T (int): the length (time steps) of the window size
+            m (int): the number of the encoder hidden states
+            p (int): the number of the decoder hidden states
+
+        Model args:
+
+        """
+
         super().__init__(name='DARNN')
 
         if T < 2:
@@ -26,9 +36,6 @@ class DARNN(Model):
 
     # Equation 1
     def call(self, inputs):
-        """
-        """
-
         X, dec_data = inputs
         batch_size = X.shape[0]
 
