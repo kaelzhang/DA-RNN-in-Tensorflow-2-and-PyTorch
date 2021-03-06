@@ -27,12 +27,18 @@ model = DARNN(10, 64, 64)
 y_hat = model(inputs)
 ```
 
+### Python Docstring Notations
+
+In docstrings of the methods of this project, `y_T__i` means ![y_T__i](https://render.githubusercontent.com/render/math?math=y_T^1), the `i`-th prediction value at time `T`
+
 ### DARNN(T, m, p, y_dim=1)
+
+> The naming of the following (hyper)parameters is consistent with the paper, except `y_dim` which is not mentioned in the paper.
 
 - **T** `int` the length (time steps) of the window size
 - **m** `int` the number of the encoder hidden states
 - **p** `int` the number of the decoder hidden states
-- **y_dim** `int=1` the prediction dimention
+- **y_dim** `int=1` the prediction dimention. Defaults to `1`.
 
 Return the DA-RNN model instance.
 
