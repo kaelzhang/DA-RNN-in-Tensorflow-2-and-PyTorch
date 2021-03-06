@@ -18,7 +18,12 @@ class DARNN(Model):
             p (int): the number of the decoder hidden states
 
         Model args:
+            inputs (tuple): the n driving series (x_1, x_2, ..., x_T) and the previous T - 1 predictions (y_1, y_2, ..., y_Tminus1)
 
+        Usage::
+
+            model = DARNN(10, 64, 64)
+            y_hat = model((X, Y))
         """
 
         super().__init__(name='DARNN')
@@ -36,7 +41,7 @@ class DARNN(Model):
 
     # Equation 1
     def call(self, inputs):
-        X, dec_data = inputs
+        X, Y = inputs
         batch_size = X.shape[0]
 
         h0 = tf.zeros((batch_size, self.m))
@@ -50,7 +55,8 @@ class DARNN(Model):
         encoder_h = self.encoder_lstm(X_tilde)
 
         y_hat_T = self.decoder(
-            dec_data, encoder_h, h0, s0
+            Y, encoder_h, h0, s0
         )
 
-        return tf.squeeze(y_hat_T)
+        return y_hat_T
+        # return tf.squeeze(y_hat_T)

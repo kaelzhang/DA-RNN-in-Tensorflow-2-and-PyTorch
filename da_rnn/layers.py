@@ -23,6 +23,7 @@ Variables / HyperParameters:
     n (int): the number of features of a single driving series
     X: the n driving (exogenous) series of shape (batch_size, T, n)
     X_tilde: the new input for the encoder, i.e. X̃ = (x̃_1, ..., x̃_t, x̃_T)
+    Y: the previous T - 1 predictions, (y_1, y_2, ..., y_Tminus1)
 
     hidden_state / h: hidden state
     cell_state / s: cell state
@@ -243,14 +244,14 @@ class Decoder(Layer):
 
     def call(
         self,
-        data,
+        Y,
         encoder_h,
         h0,
         s0
     ):
         """
         Args:
-            data: decoder data of shape (batch_size, T - 1, 1)
+            Y: prediction data of shape (batch_size, T - 1, 1) from time 1 to time T - 1. See Figure 1(b) in the paper
             encoder_h: encoder hidden states of shape (batch_size, T, m)
             h0: initial decoder hidden state
             s0: initial decoder cell state
@@ -264,12 +265,12 @@ class Decoder(Layer):
         # -> (batch_size, 1, m)
 
         for t in range(self.T - 1):
-            x = data[:, t, :][:, None, :]
+            y = Y[:, t, :][:, None, :]
             # -> (batch_size, 1, 1)
 
             # Equation 15
             y_tilde = self.dense(
-                tf.concat([x, context_vector], axis=-1)
+                tf.concat([y, context_vector], axis=-1)
                 # -> (batch_size, 1, m + 1)
             )
             # -> (batch_size, 1, 1)
