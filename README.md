@@ -18,8 +18,23 @@ pip install da-rnn
 ## Usage
 
 ```py
-from da_rnn import DARNN
+from da_rnn import (
+  DARNN
+)
+
+model = DARNN(10, 64, 64)
+
+y_hat = model(inputs)
 ```
+
+### DARNN(T, m, p, y_dim=1)
+
+- **T** `int` the length (time steps) of the window size
+- **m** `int` the number of the encoder hidden states
+- **p** `int` the number of the decoder hidden states
+- **y_dim** `int=1` the prediction dimention
+
+Return the DA-RNN model instance.
 
 ## Development
 
@@ -28,6 +43,9 @@ Install dependencies:
 ```sh
 make install
 ```
+
+## TODO
+- [x] no hardcoding (`1` for now) for prediction dimentionality
 
 ## License
 
