@@ -296,6 +296,19 @@ class Decoder(Layer):
             y = Y[:, None, t, :]
             # -> (batch_size, 1, y_dim)
 
+            Beta_t = self.temp_attention(
+                hidden_state,
+                cell_state,
+                encoder_h
+            )
+            # -> (batch_size, T, 1)
+
+            # Equation 14
+            context_vector = tf.matmul(
+                Beta_t, encoder_h, transpose_a=True
+            )
+            # -> (batch_size, 1, m)
+
             # Equation 15
             y_tilde = self.dense(
                 tf.concat([y, context_vector], axis=-1)
@@ -309,19 +322,6 @@ class Decoder(Layer):
                 initial_state=[hidden_state, cell_state]
             )
             # -> (batch_size, p)
-
-            Beta_t = self.temp_attention(
-                hidden_state,
-                cell_state,
-                encoder_h
-            )
-            # -> (batch_size, T, 1)
-
-            # Equation 14
-            context_vector = tf.matmul(
-                Beta_t, encoder_h, transpose_a=True
-            )
-            # -> (batch_size, 1, m)
 
         concatenated = tf.concat(
             [hidden_state[:, None, :], context_vector], axis=-1
