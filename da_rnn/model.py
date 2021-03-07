@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM
+import tensorflow.keras.backend as K
 
 from .layers import (
     EncoderInput,
@@ -61,7 +62,7 @@ class DARNN(Model):
 
     # Equation 1
     def call(self, inputs):
-        batch_size = inputs.shape[0]
+        batch_size = K.shape(inputs)[0]
 
         X = inputs[:, :, :-self.y_dim]
 
