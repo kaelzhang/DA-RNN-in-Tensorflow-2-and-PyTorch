@@ -1,6 +1,3 @@
-import tensorflow as tf
-import tensorflow.keras.backend as K
-
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM
 
@@ -65,8 +62,6 @@ class DARNN(Model):
 
     # Equation 1
     def call(self, inputs):
-        batch_size = K.shape(inputs)[0]
-
         X = inputs[:, :, :-self.y_dim]
         # -> (batch_size, T, n)
 
@@ -78,19 +73,12 @@ class DARNN(Model):
         Y = inputs[:, :-1, -self.y_dim:]
         # -> (batch_size, T - 1, y_dim)
 
-        h0 = tf.zeros((batch_size, self.m))
-        s0 = tf.zeros((batch_size, self.m))
-
-        X_tilde = self.encoder_input(
-            X, h0, s0
-        )
+        X_tilde = self.encoder_input(X)
 
         # Equation 11
         encoder_h = self.encoder_lstm(X_tilde)
 
-        y_hat_T = self.decoder(
-            Y, encoder_h, h0, s0
-        )
+        y_hat_T = self.decoder(Y, encoder_h)
         # -> (batch_size, 1, y_dim)
 
         return y_hat_T

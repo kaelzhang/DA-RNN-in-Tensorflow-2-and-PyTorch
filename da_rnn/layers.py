@@ -134,21 +134,19 @@ class EncoderInput(Layer):
 
         self.initial_state = None
 
-    def call(
-        self,
-        X,
-        h0,
-        s0
-    ):
+    def call(self, X):
         """
         Args:
             X: the n driving (exogenous) series of shape (batch_size, T, n)
-            h0: the initial encoder hidden state
-            s0: the initial encoder cell state
 
         Returns:
             The new input (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
         """
+
+        batch_size = K.shape(X)[0]
+
+        hidden_state = tf.zeros((batch_size, self.m))
+        cell_state = tf.zeros((batch_size, self.m))
 
         alpha_weights = []
 
@@ -158,7 +156,7 @@ class EncoderInput(Layer):
 
             hidden_state, _, cell_state = self.input_lstm(
                 x,
-                initial_state=[h0, s0]
+                initial_state=[hidden_state, cell_state]
             )
 
             Alpha_t = self.input_attention(hidden_state, cell_state, X)
@@ -279,23 +277,16 @@ class Decoder(Layer):
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(y_dim)
 
-    def call(
-        self,
-        Y,
-        encoder_h,
-        h0,
-        s0
-    ):
+    def call(self, Y, encoder_h):
         """
         Args:
             Y: prediction data of shape (batch_size, T - 1, y_dim) from time 1 to time T - 1. See Figure 1(b) in the paper
             encoder_h: encoder hidden states of shape (batch_size, T, m)
-            h0: initial decoder hidden state
-            s0: initial decoder cell state
         """
 
-        hidden_state = None
         batch_size = K.shape(encoder_h)[0]
+        hidden_state = tf.zeros((batch_size, self.m))
+        cell_state = tf.zeros((batch_size, self.m))
 
         # c in the paper
         context_vector = tf.zeros((batch_size, 1, self.encoder_lstm_units))
@@ -315,7 +306,7 @@ class Decoder(Layer):
             # Equation 16
             hidden_state, _, cell_state = self.decoder_lstm(
                 y_tilde,
-                initial_state=[h0, s0]
+                initial_state=[hidden_state, cell_state]
             )
             # -> (batch_size, p)
 
