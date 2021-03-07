@@ -157,6 +157,7 @@ class Encoder(Layer):
         for t in range(self.T):
             Alpha_t = self.input_attention(hidden_state, cell_state, X)
 
+            # Equation 10
             X_tilde_t = tf.multiply(
                 Alpha_t,
                 # TODO:
@@ -165,6 +166,7 @@ class Encoder(Layer):
             )
             # -> (batch_size, 1, n)
 
+            # Equation 11
             hidden_state, _, cell_state = self.input_lstm(
                 X_tilde_t,
                 initial_state=[hidden_state, cell_state]
@@ -175,7 +177,6 @@ class Encoder(Layer):
                 # -> (batch_size, 1, m)
             )
 
-        # Equation 10
         return tf.concat(X_encoded, axis=1)
         # -> (batch_size, T, m)
 
@@ -311,9 +312,6 @@ class Decoder(Layer):
         # -> (batch_size, 1, m)
 
         for t in range(self.T - 1):
-            y = Y[:, None, t, :]
-            # -> (batch_size, 1, y_dim)
-
             Beta_t = self.temp_attention(
                 hidden_state,
                 cell_state,
@@ -329,7 +327,7 @@ class Decoder(Layer):
 
             # Equation 15
             y_tilde = self.dense(
-                tf.concat([y, context_vector], axis=-1)
+                tf.concat([Y[:, None, t, :], context_vector], axis=-1)
                 # -> (batch_size, 1, y_dim + m)
             )
             # -> (batch_size, 1, 1)
