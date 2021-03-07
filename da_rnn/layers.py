@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow.keras.backend as K
 
 from tensorflow.keras.layers import (
     Layer,
@@ -138,10 +139,10 @@ class EncoderInput(Layer):
             The new input (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
         """
 
-        alpha_weights = tf.TensorArray(tf.float32, self.T)
+        alpha_weights = []
 
         for t in range(self.T):
-            x = X[:, t, :][:, None, :]
+            x = X[:, None, t, :]
             # -> (batch_size, n) -> (batch_size, 1, n)
 
             hidden_state, _, cell_state = self.input_lstm(
@@ -152,13 +153,10 @@ class EncoderInput(Layer):
             Alpha_t = self.input_attention(hidden_state, cell_state, X)
             # -> (batch_size, 1, n)
 
-            alpha_weights = alpha_weights.write(
-                t,
-                Alpha_t
-            )
+            alpha_weights.append(Alpha_t)
 
         # Equation 10
-        return tf.multiply(X, alpha_weights.stack())
+        return tf.multiply(X, tf.concat(alpha_weights, axis=1))
         # -> (batch_size, T, n)
 
 
@@ -249,6 +247,8 @@ class Decoder(Layer):
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(y_dim)
 
+        self.y_dim = y_dim
+
     def call(
         self,
         Y,
@@ -265,14 +265,14 @@ class Decoder(Layer):
         """
 
         hidden_state = None
-        batch_size = encoder_h.shape[0]
+        batch_size = K.shape(encoder_h)[0]
 
         # c in the paper
         context_vector = tf.zeros((batch_size, 1, self.encoder_lstm_units))
         # -> (batch_size, 1, m)
 
         for t in range(self.T - 1):
-            y = Y[:, t, :][:, None, :]
+            y = Y[:, None, t, :]
             # -> (batch_size, 1, y_dim)
 
             # Equation 15
@@ -310,6 +310,6 @@ class Decoder(Layer):
         # Equation 22
         return self.dense_vb(
             self.dense_Wb(concatenated)
-            # -> (batch_size, p)
+            # -> (batch_size, 1, p)
         )
-        # -> (batch_size, y_dim)
+        # -> (batch_size, 1, y_dim)

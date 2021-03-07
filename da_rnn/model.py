@@ -1,8 +1,8 @@
 import tensorflow as tf
+import tensorflow.keras.backend as K
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM
-import tensorflow.keras.backend as K
 
 from .layers import (
     EncoderInput,
@@ -65,6 +65,7 @@ class DARNN(Model):
         batch_size = K.shape(inputs)[0]
 
         X = inputs[:, :, :-self.y_dim]
+        # -> (batch_size, T, n)
 
         # Y's window size is one less than X's
         # so, abandon `y_T`
@@ -72,6 +73,7 @@ class DARNN(Model):
         # By doing this, there are some benefits which makes it pretty easy to
         # processing datasets
         Y = inputs[:, :-1, -self.y_dim:]
+        # -> (batch_size, T - 1, y_dim)
 
         h0 = tf.zeros((batch_size, self.m))
         s0 = tf.zeros((batch_size, self.m))
@@ -86,5 +88,6 @@ class DARNN(Model):
         y_hat_T = self.decoder(
             Y, encoder_h, h0, s0
         )
+        # -> (batch_size, 1, y_dim)
 
         return y_hat_T

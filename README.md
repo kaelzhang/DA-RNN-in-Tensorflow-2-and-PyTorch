@@ -44,12 +44,18 @@ For example:
 
 > The naming of the following (hyper)parameters is consistent with the paper, except `y_dim` which is not mentioned in the paper.
 
-- **T** `int` the length (time steps) of the window size
+- **T** `int` the length (time steps) of the window
 - **m** `int` the number of the encoder hidden states
 - **p** `int` the number of the decoder hidden states
 - **y_dim** `int=1` the prediction dimention. Defaults to `1`.
 
 Return the DA-RNN model instance.
+
+## Data Processing
+
+Each feature item of the dataset should be of shape `(batch_size, T, length_of_driving_series + y_dim)`
+
+And each label item of the dataset should be of shape `(batch_size, 1, y_dim)`
 
 ## Development
 
