@@ -6,7 +6,12 @@ __pycache__
 /.tox
 /.pytest_cache
 /data
+
+# Jupyter notebook checkpoints
 .ipynb_checkpoints
+
+# Tensorflow checkpoints
+*.hdf5
 
 # Coverage
 /.nyc_output
@@ -61,6 +66,7 @@ old/
 no_track/
 *_no_track.*
 *.no_track.*
+no_track.*
 build/
 combo/
 reference/

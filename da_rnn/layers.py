@@ -34,7 +34,7 @@ Variables / HyperParameters:
 
 
 class InputAttention(Layer):
-    def __init__(self, T):
+    def __init__(self, T, **kwargs):
         """
         Calculates the encoder attention weight Alpha_t at time t
 
@@ -42,7 +42,9 @@ class InputAttention(Layer):
             T (int): the size (time steps) of the window
         """
 
-        super().__init__(name='input_attention')
+        super().__init__(name='input_attention', **kwargs)
+
+        self.T = T
 
         self.W_e = Dense(T)
         self.U_e = Dense(T)
@@ -97,6 +99,13 @@ class InputAttention(Layer):
         )
         # -> (batch_size, 1, n)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'T': self.T
+        })
+        return config
+
 
 class EncoderInput(Layer):
     T: int
@@ -104,7 +113,8 @@ class EncoderInput(Layer):
     def __init__(
         self,
         T: int,
-        m: int
+        m: int,
+        **kwargs
     ):
         """
         Generates the new input X_tilde for encoder
@@ -114,9 +124,10 @@ class EncoderInput(Layer):
             m (int): the number of the encoder hidden states
         """
 
-        super().__init__(name='encoder_input')
+        super().__init__(name='encoder_input', **kwargs)
 
         self.T = T
+        self.m = m
 
         self.input_lstm = LSTM(m, return_state=True)
         self.input_attention = InputAttention(T)
@@ -159,9 +170,17 @@ class EncoderInput(Layer):
         return tf.multiply(X, tf.concat(alpha_weights, axis=1))
         # -> (batch_size, T, n)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'T': self.T,
+            'm': self.m
+        })
+        return config
+
 
 class TemporalAttention(Layer):
-    def __init__(self, m: int):
+    def __init__(self, m: int, **kwargs):
         """
         Calculates the attention weights::
 
@@ -173,7 +192,9 @@ class TemporalAttention(Layer):
             m (int): the number of the encoder hidden states
         """
 
-        super().__init__(name='temporal_attention')
+        super().__init__(name='temporal_attention', **kwargs)
+
+        self.m = m
 
         self.W_d = Dense(m)
         self.U_d = Dense(m)
@@ -216,6 +237,13 @@ class TemporalAttention(Layer):
         return tf.nn.softmax(l, axis=1)
         # -> (batch_size, T, 1)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'm': self.m
+        })
+        return config
+
 
 class Decoder(Layer):
     def __init__(
@@ -223,7 +251,8 @@ class Decoder(Layer):
         T: int,
         m: int,
         p: int,
-        y_dim: int
+        y_dim: int,
+        **kwargs
     ):
         """
         Calculates y_hat_T
@@ -235,9 +264,12 @@ class Decoder(Layer):
             y_dim (int): prediction dimentionality
         """
 
-        super().__init__(name='decoder')
+        super().__init__(name='decoder', **kwargs)
 
         self.T = T
+        self.m = m
+        self.p = p
+        self.y_dim = y_dim
 
         self.temp_attention = TemporalAttention(m)
         self.dense = Dense(1)
@@ -246,8 +278,6 @@ class Decoder(Layer):
 
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(y_dim)
-
-        self.y_dim = y_dim
 
     def call(
         self,
@@ -313,3 +343,13 @@ class Decoder(Layer):
             # -> (batch_size, 1, p)
         )
         # -> (batch_size, 1, y_dim)
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'T': self.T,
+            'm': self.m,
+            'p': self.p,
+            'y_dim': self.y_dim
+        })
+        return config

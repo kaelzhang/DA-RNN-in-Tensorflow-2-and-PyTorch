@@ -53,12 +53,15 @@ class DARNN(Model):
                 f'T must be an integer larger than 1, but got `{T}`'
             )
 
+        self.T = T
         self.m = m
+        self.p = p
+        self.y_dim = y_dim
+
         self.encoder_input = EncoderInput(T, m)
         self.encoder_lstm = LSTM(m, return_sequences=True)
 
         self.decoder = Decoder(T, m, p, y_dim=y_dim)
-        self.y_dim = y_dim
 
     # Equation 1
     def call(self, inputs):
@@ -91,3 +94,11 @@ class DARNN(Model):
         # -> (batch_size, 1, y_dim)
 
         return y_hat_T
+
+    def get_config(self):
+        return {
+            'T': self.T,
+            'm': self.m,
+            'p': self.p,
+            'y_dim': self.y_dim
+        }
