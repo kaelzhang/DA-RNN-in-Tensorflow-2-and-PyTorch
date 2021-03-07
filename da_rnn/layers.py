@@ -34,6 +34,8 @@ Variables / HyperParameters:
 
 
 class InputAttention(Layer):
+    T: int
+
     def __init__(self, T, **kwargs):
         """
         Calculates the encoder attention weight Alpha_t at time t
@@ -107,8 +109,9 @@ class InputAttention(Layer):
         return config
 
 
-class EncoderInput(Layer):
+class Encoder(Layer):
     T: int
+    m: int
 
     def __init__(
         self,
@@ -131,16 +134,17 @@ class EncoderInput(Layer):
 
         self.input_lstm = LSTM(m, return_state=True)
         self.input_attention = InputAttention(T)
+        self.encoder_lstm = LSTM(m, return_sequences=True)
 
         self.initial_state = None
 
-    def call(self, X):
+    def call(self, X) -> tf.Tensor:
         """
         Args:
             X: the n driving (exogenous) series of shape (batch_size, T, n)
 
         Returns:
-            The new input (x_tilde_1, ..., x_tilde_t, ..., x_tilde_T)
+            The encoder hidden state
         """
 
         batch_size = K.shape(X)[0]
@@ -148,25 +152,32 @@ class EncoderInput(Layer):
         hidden_state = tf.zeros((batch_size, self.m))
         cell_state = tf.zeros((batch_size, self.m))
 
-        alpha_weights = []
+        X_encoded = []
 
         for t in range(self.T):
-            x = X[:, None, t, :]
-            # -> (batch_size, n) -> (batch_size, 1, n)
+            Alpha_t = self.input_attention(hidden_state, cell_state, X)
+
+            X_tilde_t = tf.multiply(
+                Alpha_t,
+                # TODO:
+                # make sure it can share the underlying data
+                X[:, None, t, :]
+            )
+            # -> (batch_size, 1, n)
 
             hidden_state, _, cell_state = self.input_lstm(
-                x,
+                X_tilde_t,
                 initial_state=[hidden_state, cell_state]
             )
 
-            Alpha_t = self.input_attention(hidden_state, cell_state, X)
-            # -> (batch_size, 1, n)
-
-            alpha_weights.append(Alpha_t)
+            X_encoded.append(
+                hidden_state[:, None, :]
+                # -> (batch_size, 1, m)
+            )
 
         # Equation 10
-        return tf.multiply(X, tf.concat(alpha_weights, axis=1))
-        # -> (batch_size, T, n)
+        return tf.concat(X_encoded, axis=1)
+        # -> (batch_size, T, m)
 
     def get_config(self):
         config = super().get_config().copy()
@@ -178,6 +189,8 @@ class EncoderInput(Layer):
 
 
 class TemporalAttention(Layer):
+    m: int
+
     def __init__(self, m: int, **kwargs):
         """
         Calculates the attention weights::
@@ -202,13 +215,13 @@ class TemporalAttention(Layer):
         self,
         hidden_state,
         cell_state,
-        encoder_h
+        X_encoded
     ):
         """
         Args:
             hidden_state: hidden state `d` of shape (batch_size, p)
             cell_state: cell state `s` of shape (batch_size, p)
-            encoder_h: the encoder hidden states (batch_size, T, m)
+            X_encoded: the encoder hidden states (batch_size, T, m)
 
         Returns:
             The attention weights for encoder hidden states (beta_t)
@@ -218,14 +231,14 @@ class TemporalAttention(Layer):
         l = self.v_d(
             tf.math.tanh(
                 self.W_d(
-                    RepeatVector(encoder_h.shape[1])(
+                    RepeatVector(X_encoded.shape[1])(
                         tf.concat([hidden_state, cell_state], axis=-1)
                         # -> (batch_size, p * 2)
                     )
                     # -> (batch_size, T, p * 2)
                 )
                 # -> (batch_size, T, m)
-                + self.U_d(encoder_h)
+                + self.U_d(X_encoded)
             )
             # -> (batch_size, T, m)
         )
@@ -244,6 +257,11 @@ class TemporalAttention(Layer):
 
 
 class Decoder(Layer):
+    T: int
+    m: int
+    p: int
+    y_dim: int
+
     def __init__(
         self,
         T: int,
@@ -277,14 +295,14 @@ class Decoder(Layer):
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(y_dim)
 
-    def call(self, Y, encoder_h):
+    def call(self, Y, X_encoded) -> tf.Tensor:
         """
         Args:
             Y: prediction data of shape (batch_size, T - 1, y_dim) from time 1 to time T - 1. See Figure 1(b) in the paper
-            encoder_h: encoder hidden states of shape (batch_size, T, m)
+            X_encoded: encoder hidden states of shape (batch_size, T, m)
         """
 
-        batch_size = K.shape(encoder_h)[0]
+        batch_size = K.shape(X_encoded)[0]
         hidden_state = tf.zeros((batch_size, self.m))
         cell_state = tf.zeros((batch_size, self.m))
 
@@ -299,13 +317,13 @@ class Decoder(Layer):
             Beta_t = self.temp_attention(
                 hidden_state,
                 cell_state,
-                encoder_h
+                X_encoded
             )
             # -> (batch_size, T, 1)
 
             # Equation 14
             context_vector = tf.matmul(
-                Beta_t, encoder_h, transpose_a=True
+                Beta_t, X_encoded, transpose_a=True
             )
             # -> (batch_size, 1, m)
 

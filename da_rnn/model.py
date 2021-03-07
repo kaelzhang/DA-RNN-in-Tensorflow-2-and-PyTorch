@@ -1,8 +1,7 @@
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import LSTM
 
 from .layers import (
-    EncoderInput,
+    Encoder,
     Decoder
 )
 
@@ -55,8 +54,7 @@ class DARNN(Model):
         self.p = p
         self.y_dim = y_dim
 
-        self.encoder_input = EncoderInput(T, m)
-        self.encoder_lstm = LSTM(m, return_sequences=True)
+        self.encoder = Encoder(T, m)
 
         self.decoder = Decoder(T, m, p, y_dim=y_dim)
 
@@ -73,12 +71,9 @@ class DARNN(Model):
         Y = inputs[:, :-1, -self.y_dim:]
         # -> (batch_size, T - 1, y_dim)
 
-        X_tilde = self.encoder_input(X)
+        X_encoded = self.encoder(X)
 
-        # Equation 11
-        encoder_h = self.encoder_lstm(X_tilde)
-
-        y_hat_T = self.decoder(Y, encoder_h)
+        y_hat_T = self.decoder(Y, X_encoded)
         # -> (batch_size, 1, y_dim)
 
         return y_hat_T
