@@ -35,7 +35,9 @@ class DARNN(Model):
 
             where
             - d is the prediction dimention
-            - y_T__i = 0, 1 <= i <= d
+            - y_T__i = 0, 1 <= i <= d.
+
+            Actually, the model will not use the value of y_T
 
         Usage::
 
@@ -64,6 +66,10 @@ class DARNN(Model):
         X = inputs[:, :, :-self.y_dim]
 
         # Y's window size is one less than X's
+        # so, abandon `y_T`
+
+        # By doing this, there are some benefits which makes it pretty easy to
+        # processing datasets
         Y = inputs[:, :-1, -self.y_dim:]
 
         h0 = tf.zeros((batch_size, self.m))
@@ -81,4 +87,3 @@ class DARNN(Model):
         )
 
         return y_hat_T
-        # return tf.squeeze(y_hat_T)

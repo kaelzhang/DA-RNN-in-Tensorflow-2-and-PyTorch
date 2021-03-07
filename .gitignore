@@ -6,6 +6,7 @@ __pycache__
 /.tox
 /.pytest_cache
 /data
+.ipynb_checkpoints
 
 # Coverage
 /.nyc_output

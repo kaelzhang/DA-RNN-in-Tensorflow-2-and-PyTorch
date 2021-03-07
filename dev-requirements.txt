@@ -7,3 +7,4 @@ pytest-cov
 setuptools
 twine
 jupyterlab
+get_rolling_window
