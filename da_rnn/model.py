@@ -67,7 +67,7 @@ class DARNN(Model):
         # so, abandon `y_T`
 
         # By doing this, there are some benefits which makes it pretty easy to
-        # processing datasets
+        # process datasets
         Y = inputs[:, :-1, -self.y_dim:]
         # -> (batch_size, T - 1, y_dim)
 

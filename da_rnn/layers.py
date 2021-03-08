@@ -146,7 +146,7 @@ class Encoder(Layer):
             X: the n driving (exogenous) series of shape (batch_size, T, n)
 
         Returns:
-            The encoder hidden state
+            The encoder hidden state of shape (batch_size, T, m)
         """
 
         batch_size = K.shape(X)[0]
@@ -306,6 +306,9 @@ class Decoder(Layer):
         Args:
             Y: prediction data of shape (batch_size, T - 1, y_dim) from time 1 to time T - 1. See Figure 1(b) in the paper
             X_encoded: encoder hidden states of shape (batch_size, T, m)
+
+        Returns:
+            y_hat_T: the prediction of shape (batch_size, 1, y_dim)
         """
 
         batch_size = K.shape(X_encoded)[0]
