@@ -71,27 +71,30 @@ class InputAttention(Layer):
 
         n = X.shape[2]
 
-        # Equation 8:
-        e = self.v_e(
-            tf.math.tanh(
-                self.W_e(
-                    # [h_t-1; s_t-1]
-                    RepeatVector(n)(
-                        tf.concat([hidden_state, cell_state], axis=-1)
-                        # -> (batch_size, m * 2)
-                    )
-                    # -> (batch_size, n, m * 2)
-                )
+        # [h_t-1; s_t-1]
+        hs = RepeatVector(n)(
+            tf.concat([hidden_state, cell_state], axis=-1)
+            # -> (batch_size, m * 2)
+        )
+        # -> (batch_size, n, m * 2)
+
+        tanh = tf.math.tanh(
+            tf.concat([
+                self.W_e(hs),
                 # -> (batch_size, n, T)
 
-                + self.U_e(
+                self.U_e(
                     Permute((2, 1))(X)
                     # -> (batch_size, n, T)
-                )
+                ),
                 # -> (batch_size, n, T)
-            )
-            # -> (batch_size, n, T)
+            ], axis=-1)
+            # -> (batch_size, n, T * 2)
         )
+        # -> (batch_size, n, T * 2)
+
+        # Equation 8:
+        e = self.v_e(tanh)
         # -> (batch_size, n, 1)
 
         # Equation: 9
@@ -230,15 +233,18 @@ class TemporalAttention(Layer):
         # Equation 12
         l = self.v_d(
             tf.math.tanh(
-                self.W_d(
-                    RepeatVector(X_encoded.shape[1])(
-                        tf.concat([hidden_state, cell_state], axis=-1)
-                        # -> (batch_size, p * 2)
-                    )
-                    # -> (batch_size, T, p * 2)
-                )
-                # -> (batch_size, T, m)
-                + self.U_d(X_encoded)
+                tf.concat([
+                    self.W_d(
+                        RepeatVector(X_encoded.shape[1])(
+                            tf.concat([hidden_state, cell_state], axis=-1)
+                            # -> (batch_size, p * 2)
+                        )
+                        # -> (batch_size, T, p * 2)
+                    ),
+                    # -> (batch_size, T, m)
+                    self.U_d(X_encoded)
+                ], axis=-1)
+                # -> (batch_size, T, m * 2)
             )
             # -> (batch_size, T, m)
         )
