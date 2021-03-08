@@ -65,6 +65,13 @@ Install dependencies:
 make install
 ```
 
+Run notebook:
+
+```sh
+cd notebook
+jupyter lab
+```
+
 ## TODO
 - [x] no hardcoding (`1` for now) for prediction dimentionality
 

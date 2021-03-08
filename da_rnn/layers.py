@@ -134,7 +134,6 @@ class Encoder(Layer):
 
         self.input_lstm = LSTM(m, return_state=True)
         self.input_attention = InputAttention(T)
-        self.encoder_lstm = LSTM(m, return_sequences=True)
 
         self.initial_state = None
 

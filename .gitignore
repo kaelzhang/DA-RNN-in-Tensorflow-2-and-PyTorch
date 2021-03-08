@@ -6,7 +6,8 @@ __pycache__
 /.tox
 /.pytest_cache
 /data
-/notebook
+/notebook/*.ipynb
+!/notebook/nasdaq.ipynb
 
 # Jupyter notebook checkpoints
 .ipynb_checkpoints
