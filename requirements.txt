@@ -1,4 +1,2 @@
 # Newer version of numpy is not compatible with tensorflow 2.4.1
 numpy <= 1.19.5
-tensorflow >= 2
-pandas

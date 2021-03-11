@@ -31,6 +31,10 @@ settings = dict(
     long_description_content_type='text/markdown',
     python_requires='>=3.7',
     install_requires=read_requirements('requirements.txt'),
+    extras_require={
+        'keras': ['tensorflow >= 2'],
+        'torch': ['torch']
+    },
     tests_require=read_requirements('dev-requirements.txt'),
     classifiers=[
         'Topic :: Software Development :: Libraries :: Python Modules',

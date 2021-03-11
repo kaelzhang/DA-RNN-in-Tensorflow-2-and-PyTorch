@@ -1,7 +1,7 @@
-[![](https://travis-ci.org/kaelzhang/tensorflow-2-DA-RNN.svg?branch=master)](https://travis-ci.org/kaelzhang/tensorflow-2-DA-RNN)
-[![](https://codecov.io/gh/kaelzhang/tensorflow-2-DA-RNN/branch/master/graph/badge.svg)](https://codecov.io/gh/kaelzhang/tensorflow-2-DA-RNN)
+[![](https://travis-ci.org/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch.svg?branch=master)](https://travis-ci.org/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch)
+[![](https://codecov.io/gh/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch/branch/master/graph/badge.svg)](https://codecov.io/gh/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch)
 [![](https://img.shields.io/pypi/v/da-rnn.svg)](https://pypi.org/project/da_rnn/)
-[![](https://img.shields.io/pypi/l/da-rnn.svg)](https://github.com/kaelzhang/tensorflow-2-DA-RNN)
+[![](https://img.shields.io/pypi/l/da-rnn.svg)](https://github.com/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch)
 
 # Tensorflow 2 DA-RNN
 
@@ -11,20 +11,40 @@ Paper: [https://arxiv.org/abs/1704.02971](https://arxiv.org/abs/1704.02971)
 
 ## Install
 
+For Tensorflow 2
+
 ```sh
-pip install da-rnn
+pip install da-rnn[keras]
+```
+
+For PyTorch
+
+```sh
+pip install da-rnn[torch]
 ```
 
 ## Usage
 
+For Tensorflow 2
+
 ```py
-from da_rnn import (
+from da_rnn.keras import (
   DARNN
 )
 
 model = DARNN(10, 64, 64)
 
 y_hat = model(inputs)
+```
+
+For PyTorch
+
+```py
+from da_rnn.torch import (
+  DARNN
+)
+
+model = DARNN(10, 64, 64)
 ```
 
 ### Python Docstring Notations
