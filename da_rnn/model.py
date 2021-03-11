@@ -1,3 +1,4 @@
+from typing import Optional
 from tensorflow.keras.models import Model
 
 from .layers import (
@@ -11,15 +12,15 @@ class DARNN(Model):
         self,
         T: int,
         m: int,
-        p: int,
+        p: Optional[int] = None,
         y_dim: int = 1
     ):
         """
         Args:
             T (int): the size (time steps) of the window
             m (int): the number of the encoder hidden states
-            p (int): the number of the decoder hidden states
-            y_dim (int): prediction dimentionality
+            p (:obj:`int`, optional): the number of the decoder hidden states. Defaults to `m`
+            y_dim (:obj:`int`, optional): prediction dimentionality. Defaults to `1`
 
         Model Args:
             inputs: the concatenation of
@@ -51,7 +52,7 @@ class DARNN(Model):
 
         self.T = T
         self.m = m
-        self.p = p
+        self.p = p or m
         self.y_dim = y_dim
 
         self.encoder = Encoder(T, m)
@@ -68,7 +69,7 @@ class DARNN(Model):
 
         # By doing this, there are some benefits which makes it pretty easy to
         # process datasets
-        Y = inputs[:, :-1, -self.y_dim:]
+        Y = inputs[:, :, -self.y_dim:]
         # -> (batch_size, T - 1, y_dim)
 
         X_encoded = self.encoder(X)

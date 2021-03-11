@@ -5,7 +5,6 @@ from tensorflow.keras.layers import (
     Layer,
     LSTM,
     Dense,
-    RepeatVector,
     Permute
 )
 
@@ -72,9 +71,10 @@ class InputAttention(Layer):
         n = X.shape[2]
 
         # [h_t-1; s_t-1]
-        hs = RepeatVector(n)(
-            tf.concat([hidden_state, cell_state], axis=-1)
+        hs = K.repeat(
+            tf.concat([hidden_state, cell_state], axis=-1),
             # -> (batch_size, m * 2)
+            n
         )
         # -> (batch_size, n, m * 2)
 
@@ -137,8 +137,6 @@ class Encoder(Layer):
 
         self.input_lstm = LSTM(m, return_state=True)
         self.input_attention = InputAttention(T)
-
-        self.initial_state = None
 
     def call(self, X) -> tf.Tensor:
         """
@@ -235,9 +233,10 @@ class TemporalAttention(Layer):
             tf.math.tanh(
                 tf.concat([
                     self.W_d(
-                        RepeatVector(X_encoded.shape[1])(
-                            tf.concat([hidden_state, cell_state], axis=-1)
+                        K.repeat(
+                            tf.concat([hidden_state, cell_state], axis=-1),
                             # -> (batch_size, p * 2)
+                            X_encoded.shape[1]
                         )
                         # -> (batch_size, T, p * 2)
                     ),
@@ -296,7 +295,6 @@ class Decoder(Layer):
         self.temp_attention = TemporalAttention(m)
         self.dense = Dense(1)
         self.decoder_lstm = LSTM(p, return_state=True)
-        self.encoder_lstm_units = m
 
         self.dense_Wb = Dense(p)
         self.dense_vb = Dense(y_dim)
@@ -316,7 +314,7 @@ class Decoder(Layer):
         cell_state = tf.zeros((batch_size, self.m))
 
         # c in the paper
-        context_vector = tf.zeros((batch_size, 1, self.encoder_lstm_units))
+        context_vector = tf.zeros((batch_size, 1, self.m))
         # -> (batch_size, 1, m)
 
         for t in range(self.T - 1):
