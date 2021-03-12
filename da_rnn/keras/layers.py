@@ -296,8 +296,8 @@ class Decoder(Layer):
         self.dense = Dense(1)
         self.decoder_lstm = LSTM(p, return_state=True)
 
-        self.dense_Wb = Dense(p)
-        self.dense_vb = Dense(y_dim)
+        self.Wb = Dense(p)
+        self.vb = Dense(y_dim)
 
     def call(self, Y, X_encoded) -> tf.Tensor:
         """
@@ -310,8 +310,8 @@ class Decoder(Layer):
         """
 
         batch_size = K.shape(X_encoded)[0]
-        hidden_state = tf.zeros((batch_size, self.m))
-        cell_state = tf.zeros((batch_size, self.m))
+        hidden_state = tf.zeros((batch_size, self.p))
+        cell_state = tf.zeros((batch_size, self.p))
 
         # c in the paper
         context_vector = tf.zeros((batch_size, 1, self.m))
@@ -350,9 +350,12 @@ class Decoder(Layer):
         )
         # -> (batch_size, 1, m + p)
 
+        # TODO:
+        # squeeze
+
         # Equation 22
-        return self.dense_vb(
-            self.dense_Wb(concatenated)
+        return self.vb(
+            self.Wb(concatenated)
             # -> (batch_size, 1, p)
         )
         # -> (batch_size, 1, y_dim)
