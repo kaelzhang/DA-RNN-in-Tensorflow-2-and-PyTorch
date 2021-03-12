@@ -1,8 +1,14 @@
+from typing import Optional
+
 import torch
 from torch.nn import (
     Module,
     Linear,
     LSTM
+)
+
+from da_rnn.common import (
+    check_T
 )
 
 
@@ -18,9 +24,9 @@ class Encoder(Module):
 
     def __init__(
         self,
-        n,
-        T,
-        m,
+        n: int,
+        T: int,
+        m: int,
         dropout
     ):
         """
@@ -38,15 +44,13 @@ class Encoder(Module):
         self.T = T
         self.m = m
 
-        self.dropout = dropout
-
         # Two linear layers forms a bigger linear layer
         self.WU_e = Linear(m * 2 + T, T, False)
 
         # Since v_e ∈ R^T, the input size is T
         self.v_e = Linear(T, 1, False)
 
-        self.lstm = LSTM(self.n, self.m, dropout=self.dropout)
+        self.lstm = LSTM(self.n, self.m, dropout=dropout)
 
     def forward(self, X):
         """
@@ -105,18 +109,16 @@ class Encoder(Module):
 
 class Decoder(Module):
     T: int
-    m: int
     p: int
-    y_dim: int
 
     DEVICE = DEVICE
 
     def __init__(
         self,
-        T,
-        m,
-        p,
-        y_dim,
+        T: int,
+        m: int,
+        p: int,
+        y_dim: int,
         dropout
     ):
         """
@@ -132,16 +134,13 @@ class Decoder(Module):
         super().__init__()
 
         self.T = T
-        self.m = m
         self.p = p
-        self.y_dim = y_dim
-        self.dropout = dropout
 
         self.WU_d = Linear(p * 2 + m, m, False)
         self.v_d = Linear(m, 1, False)
         self.wb_tilde = Linear(y_dim + m, 1, False)
 
-        self.lstm = LSTM(1, p, dropout=self.dropout)
+        self.lstm = LSTM(1, p, dropout=dropout)
 
         self.Wb = Linear(p + m, p)
         self.vb = Linear(p, y_dim)
@@ -224,3 +223,68 @@ class Decoder(Module):
         # -> (batch_size, 1)
 
         return y_hat_T
+
+
+class DARNN(Module):
+    y_dim: int
+
+    DEVICE = DEVICE
+
+    def __init__(
+        self,
+        n: int,
+        T: int,
+        m: int,
+        p: Optional[int] = None,
+        y_dim: int = 1,
+        dropout=0
+    ):
+        """
+        Args:
+            n (int): input size, the number of features of a single driving series
+            T (int): the size (time steps) of the window
+            m (int): the number of the encoder hidden states
+            p (:obj:`int`, optional): the number of the decoder hidden states. Defaults to `m`
+            y_dim (:obj:`int`, optional): prediction dimentionality. Defaults to `1`
+
+        Model Args:
+            inputs: the concatenation of
+            - n driving series (x_1, x_2, ..., x_T) and
+            - the previous (historical) T - 1 predictions (y_1, y_2, ..., y_Tminus1, zero)
+
+        `inputs` Explanation::
+
+            inputs_t = (x_t__1, x_t__2, ..., x_t__n, y_t__1, y_t__2, ..., y_t__d)
+
+            where
+            - d is the prediction dimention
+            - y_T__i = 0, 1 <= i <= d.
+
+            Actually, the model will not use the value of y_T
+
+        Usage::
+
+            model = DARNN(10, 64, 64)
+            y_hat = model(inputs)
+        """
+
+        super().__init__()
+
+        check_T(T)
+
+        self.y_dim = y_dim
+
+        self.encoder = Encoder(n, T, m, dropout)
+        self.decoder = Decoder(T, m, p or m, y_dim, dropout)
+
+        # Apply device in-place directly
+        self.to(DEVICE)
+
+    def forward(self, inputs):
+        X, Y = torch.split(
+            inputs,
+            [inputs.shape[2] - self.y_dim, self.y_dim],
+            dim=2
+        )
+
+        return self.decoder(Y, self.encoder(X))

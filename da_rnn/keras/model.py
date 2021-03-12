@@ -1,5 +1,10 @@
 from typing import Optional
+
 from tensorflow.keras.models import Model
+
+from da_rnn.common import (
+    check_T
+)
 
 from .layers import (
     Encoder,
@@ -45,10 +50,7 @@ class DARNN(Model):
 
         super().__init__(name='DARNN')
 
-        if T < 2:
-            raise ValueError(
-                f'T must be an integer larger than 1, but got `{T}`'
-            )
+        check_T(T)
 
         self.T = T
         self.m = m
@@ -56,7 +58,6 @@ class DARNN(Model):
         self.y_dim = y_dim
 
         self.encoder = Encoder(T, m)
-
         self.decoder = Decoder(T, m, p, y_dim=y_dim)
 
     # Equation 1
