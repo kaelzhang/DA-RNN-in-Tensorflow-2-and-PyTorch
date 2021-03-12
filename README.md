@@ -32,19 +32,43 @@ from da_rnn.keras import (
   DARNN
 )
 
-model = DARNN(10, 64, 64)
+model = DARNN(T=10, m=128)
 
+# Train
+model.fit(
+  train_ds,
+  validation_data=val_ds,
+  epochs=100,
+  verbose=1
+)
+
+# Predict
 y_hat = model(inputs)
 ```
 
 For PyTorch
 
 ```py
+import torch
+from torch_fit import fit
 from da_rnn.torch import (
   DARNN
 )
 
-model = DARNN(10, 64, 64)
+model = DARNN(n=50, T=10, m=128)
+
+# Train
+fit(
+  model,
+  train_ds,
+  validation_data=val_ds,
+  epochs=100,
+  verbose=1
+)
+
+# Predict
+with torch.no_grad():
+  y_hat = model(inputs)
 ```
 
 ### Python Docstring Notations
