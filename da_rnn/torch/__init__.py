@@ -1,4 +1,5 @@
 from .model import (
     Encoder,
-    Decoder
+    Decoder,
+    DEVICE
 )

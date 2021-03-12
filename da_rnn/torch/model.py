@@ -14,12 +14,14 @@ class Encoder(Module):
     T: int
     m: int
 
+    DEVICE = DEVICE
+
     def __init__(
         self,
         n,
         T,
         m,
-        dropout=0
+        dropout
     ):
         """
         Generates the new input X_tilde for encoder
@@ -57,10 +59,10 @@ class Encoder(Module):
 
         batch_size = X.shape[0]
 
-        hidden_state = torch.zeros(1, batch_size, self.m, device=DEVICE)
-        cell_state = torch.zeros(1, batch_size, self.m, device=DEVICE)
+        hidden_state = torch.zeros(1, batch_size, self.m, device=self.DEVICE)
+        cell_state = torch.zeros(1, batch_size, self.m, device=self.DEVICE)
 
-        X_encoded = torch.zeros(self.T, batch_size, self.m, device=DEVICE)
+        X_encoded = torch.zeros(self.T, batch_size, self.m, device=self.DEVICE)
 
         for t in range(self.T):
             # [h_t-1; s_t-1]
@@ -71,7 +73,7 @@ class Encoder(Module):
             # -> (batch_size, n, m * 2)
 
             tanh = torch.tanh(
-                self.linear(
+                self.WU_e(
                     torch.cat((hs, X.permute(0, 2, 1)), 2)
                     # -> (batch_size, n, m * 2 + T)
                 )
@@ -102,15 +104,15 @@ class Encoder(Module):
 
 
 class Decoder(Module):
-    n: int
     T: int
     m: int
     p: int
     y_dim: int
 
+    DEVICE = DEVICE
+
     def __init__(
         self,
-        n,
         T,
         m,
         p,
@@ -129,7 +131,6 @@ class Decoder(Module):
 
         super().__init__()
 
-        self.n = n
         self.T = T
         self.m = m
         self.p = p
@@ -138,7 +139,7 @@ class Decoder(Module):
 
         self.WU_d = Linear(p * 2 + m, m, False)
         self.v_d = Linear(m, 1, False)
-        self.linear = Linear(y_dim + m, 1, False)
+        self.wb_tilde = Linear(y_dim + m, 1, False)
 
         self.lstm = LSTM(1, p, dropout=self.dropout)
 
@@ -157,8 +158,8 @@ class Decoder(Module):
 
         batch_size = Y.shape[0]
 
-        hidden_state = torch.zeros(1, batch_size, self.p, device=DEVICE)
-        cell_state = torch.zeros(1, batch_size, self.p, device=DEVICE)
+        hidden_state = torch.zeros(1, batch_size, self.p, device=self.DEVICE)
+        cell_state = torch.zeros(1, batch_size, self.p, device=self.DEVICE)
 
         for t in range(self.T - 1):
             # Equation 12
@@ -199,7 +200,7 @@ class Decoder(Module):
             # -> (batch_size, m)
 
             # Equation 15
-            y_tilde = self.linear(
+            y_tilde = self.wb_tilde(
                 torch.cat((Y[:, t, :], context_vector), 1)
                 # -> (batch_size, y_dim + m)
             )
