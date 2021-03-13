@@ -6,7 +6,8 @@ __pycache__
 /.tox
 /.pytest_cache
 /data
-/notebook/*.ipynb
+/notebook/*
+!/notebook/*.py
 !/notebook/keras.ipynb
 !/notebook/pytorch.ipynb
 
