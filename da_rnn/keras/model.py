@@ -76,7 +76,7 @@ class DARNN(Model):
         X_encoded = self.encoder(X)
 
         y_hat_T = self.decoder(Y, X_encoded)
-        # -> (batch_size, 1, y_dim)
+        # -> (batch_size, y_dim)
 
         return y_hat_T
 

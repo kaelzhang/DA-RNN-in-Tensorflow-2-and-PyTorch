@@ -306,7 +306,7 @@ class Decoder(Layer):
             X_encoded: encoder hidden states of shape (batch_size, T, m)
 
         Returns:
-            y_hat_T: the prediction of shape (batch_size, 1, y_dim)
+            y_hat_T: the prediction of shape (batch_size, y_dim)
         """
 
         batch_size = K.shape(X_encoded)[0]
@@ -350,15 +350,14 @@ class Decoder(Layer):
         )
         # -> (batch_size, 1, m + p)
 
-        # TODO:
-        # squeeze
-
         # Equation 22
-        return self.vb(
+        y_hat_T = self.vb(
             self.Wb(concatenated)
             # -> (batch_size, 1, p)
         )
         # -> (batch_size, 1, y_dim)
+
+        return tf.squeeze(y_hat_T, axis=1)
 
     def get_config(self):
         config = super().get_config().copy()

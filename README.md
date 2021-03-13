@@ -28,50 +28,47 @@ pip install da-rnn[torch]
 For Tensorflow 2
 
 ```py
-from da_rnn.keras import (
-  DARNN
-)
+from da_rnn.keras import DARNN
 
 model = DARNN(T=10, m=128)
 
 # Train
 model.fit(
-  train_ds,
-  validation_data=val_ds,
-  epochs=100,
-  verbose=1
+    train_ds,
+    validation_data=val_ds,
+    epochs=100,
+    verbose=1
 )
 
 # Predict
 y_hat = model(inputs)
 ```
 
-For PyTorch
+For PyTorch (with poutyne)
 
 ```py
 import torch
-from torch_fit import fit
-from da_rnn.torch import (
-  DARNN
-)
+from poutyne import Model
+from da_rnn.torch import DARNN
 
-model = DARNN(n=50, T=10, m=128)
+darnn = DARNN(n=50, T=10, m=128)
+model = Model(darnn)
 
 # Train
-fit(
-  model,
-  train_ds,
-  validation_data=val_ds,
-  epochs=100,
-  verbose=1
+model.fit(
+    train_ds,
+    validation_data=val_ds,
+    epochs=100,
+    verbose=1
 )
 
 # Predict
 with torch.no_grad():
-  y_hat = model(inputs)
+    y_hat = model(inputs)
 ```
 
 ### Python Docstring Notations
+
 
 In docstrings of the methods of this project, we have the following notation convention:
 
@@ -85,9 +82,11 @@ For example:
 - `alpha_t__k` means ![alpha_t__k](https://render.githubusercontent.com/render/math?math=\alpha_t^k), the attention weight measuring the importance of the `k`-th input feature (driving series) at time `t`.
 
 ### DARNN(T, m, p, y_dim=1)
+### DARNN(n, T, m, p, y_dim=1)
 
 > The naming of the following (hyper)parameters is consistent with the paper, except `y_dim` which is not mentioned in the paper.
 
+- **n** (torch only) `int` input size, the number of features of a single driving series
 - **T** `int` the length (time steps) of the window
 - **m** `int` the number of the encoder hidden states
 - **p** `int` the number of the decoder hidden states
@@ -99,7 +98,7 @@ Return the DA-RNN model instance.
 
 Each feature item of the dataset should be of shape `(batch_size, T, length_of_driving_series + y_dim)`
 
-And each label item of the dataset should be of shape `(batch_size, 1, y_dim)`
+And each label item of the dataset should be of shape `(batch_size, y_dim)`
 
 ## Development
 

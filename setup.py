@@ -19,7 +19,11 @@ def read_requirements(filename):
 
 settings = dict(
     name='da-rnn',
-    packages=['da_rnn'],
+    packages=[
+        'da_rnn',
+        'da_rnn/keras',
+        'da_rnn/torch'
+    ],
     version=__version__,
     author='kaelzhang',
     author_email='',

@@ -152,7 +152,7 @@ class Decoder(Module):
             X_encoded: encoder hidden states of shape (T, batch_size, m)
 
         Returns:
-            y_hat_T: the prediction of shape (batch_size, 1, y_dim)
+            y_hat_T: the prediction of shape (batch_size, y_dim)
         """
 
         batch_size = Y.shape[0]
@@ -276,9 +276,6 @@ class DARNN(Module):
 
         self.encoder = Encoder(n, T, m, dropout)
         self.decoder = Decoder(T, m, p or m, y_dim, dropout)
-
-        # Apply device in-place directly
-        self.to(DEVICE)
 
     def forward(self, inputs):
         X, Y = torch.split(
