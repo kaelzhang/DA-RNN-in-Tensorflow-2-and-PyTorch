@@ -1,5 +1,5 @@
-from .model import DARNN
-from .layers import (
+from .model import (
+    DARNN,
     Encoder,
     Decoder
 )
