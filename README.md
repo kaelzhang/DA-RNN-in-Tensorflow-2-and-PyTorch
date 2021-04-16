@@ -25,7 +25,7 @@ pip install da-rnn[torch]
 
 ## Usage
 
-For Tensorflow 2
+For Tensorflow 2 (Still buggy for now)
 
 ```py
 from da_rnn.keras import DARNN
@@ -44,7 +44,7 @@ model.fit(
 y_hat = model(inputs)
 ```
 
-For PyTorch (with poutyne)
+For PyTorch (Tested. Works)
 
 ```py
 import torch
