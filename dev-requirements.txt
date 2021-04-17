@@ -8,3 +8,6 @@ setuptools
 twine
 jupyterlab
 get_rolling_window
+torch
+tensorflow >= 2
+Poutyne
