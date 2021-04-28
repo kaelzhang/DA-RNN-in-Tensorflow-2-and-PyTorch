@@ -3,11 +3,27 @@
 [![](https://img.shields.io/pypi/v/da-rnn.svg)](https://pypi.org/project/da_rnn/)
 [![](https://img.shields.io/pypi/l/da-rnn.svg)](https://github.com/kaelzhang/DA-RNN-in-Tensorflow-2-and-PyTorch)
 
-# Tensorflow 2 DA-RNN
+# Tensorflow 2 / Torch DA-RNN
 
-A Tensorflow 2 (Keras) implementation of the [Dual-Stage Attention-Based Recurrent Neural Network for Time Series Prediction](https://arxiv.org/abs/1704.02971)
+A Tensorflow 2 (Keras) and pytorch implementation of the [Dual-Stage Attention-Based Recurrent Neural Network for Time Series Prediction](https://arxiv.org/abs/1704.02971)
 
 Paper: [https://arxiv.org/abs/1704.02971](https://arxiv.org/abs/1704.02971)
+
+## Run notebook demo
+
+Install dependencies (It is recommended to use [anaconda](https://docs.anaconda.com/anaconda/install/) to manage environments):
+
+```sh
+make install
+```
+
+Run notebook:
+
+```sh
+cd notebook
+jupyter lab
+```
+
 
 ## Install
 
@@ -99,21 +115,6 @@ Return the DA-RNN model instance.
 Each feature item of the dataset should be of shape `(batch_size, T, length_of_driving_series + y_dim)`
 
 And each label item of the dataset should be of shape `(batch_size, y_dim)`
-
-## Development
-
-Install dependencies:
-
-```sh
-make install
-```
-
-Run notebook:
-
-```sh
-cd notebook
-jupyter lab
-```
 
 ## TODO
 - [x] no hardcoding (`1` for now) for prediction dimentionality
