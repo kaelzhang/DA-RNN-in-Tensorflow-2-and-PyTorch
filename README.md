@@ -22,6 +22,8 @@ Run notebook:
 ```sh
 cd notebook
 jupyter lab
+
+# Run `pytorch.ipynb`
 ```
 
 
