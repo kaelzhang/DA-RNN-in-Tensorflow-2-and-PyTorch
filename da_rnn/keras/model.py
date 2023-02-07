@@ -424,7 +424,7 @@ class DARNN(Model):
         self.y_dim = y_dim
 
         self.encoder = Encoder(T, m)
-        self.decoder = Decoder(T, m, p, y_dim=y_dim)
+        self.decoder = Decoder(T, m, self.p, y_dim=y_dim)
 
     # Equation 1
     def call(self, inputs):
