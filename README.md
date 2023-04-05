@@ -108,7 +108,7 @@ For example:
 - **T** `int` the length (time steps) of the window
 - **m** `int` the number of the encoder hidden states
 - **p** `int` the number of the decoder hidden states
-- **y_dim** `int=1` the prediction dimention. Defaults to `1`.
+- **y_dim** `int=1` the prediction dimension. Defaults to `1`.
 
 Return the DA-RNN model instance.
 

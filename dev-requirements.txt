@@ -9,5 +9,8 @@ twine
 jupyterlab
 get_rolling_window
 torch
-tensorflow >= 2
+# tensorflow
 Poutyne
+pandas
+scikit-learn
+matplotlib
